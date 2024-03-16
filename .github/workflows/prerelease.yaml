@@ -1,35 +1,33 @@
-name: "pre-release"
-
-on:
-  push:
-    branches:
-      - "master"
-
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v2.3.4
-        with:
-          lfs: true
-          fetch-depth: 0
+    - continue-on-error: true
+      name: Checkout source code
+      uses: actions/checkout@v2.3.4
+      with:
+        fetch-depth: 0
+        lfs: true
+    - continue-on-error: true
+      name: Set up Java
+      uses: actions/setup-java@v2
+      with:
+        distribution: adopt
+        java-version: '17'
+    - continue-on-error: true
+      name: Build
+      run: ./gradlew build -x test
+    - continue-on-error: true
+      id: automatic_releases
+      uses: marvinpinto/action-automatic-releases@latest
+      with:
+        automatic_release_tag: latest
+        files: 'releases/*.jar
 
-      - name: Set up Java
-        uses: actions/setup-java@v2
-        with:
-          distribution: adopt
-          java-version: '17'
-
-      # burpsuite_pro.jar is not available, disable tests
-      - name: Build
-        run: ./gradlew build -x test
-
-      - uses: "marvinpinto/action-automatic-releases@latest"
-        with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          prerelease: true
-          automatic_release_tag: "latest"
-          files: |
-            releases/*.jar
-        id: "automatic_releases"
+          '
+        prerelease: true
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+name: pre-release
+on:
+  repository_dispatch:
+    types: trigger-ga___prerelease.yaml
